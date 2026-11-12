@@ -1,0 +1,29 @@
+{
+  "onboarding": "Which sites do you get stuck on most? Pick them — I'll be there 🫂",
+  "settings": {
+    "pageTitle": "Focus Friend — Settings",
+    "intro": "Choose the places where you'd like a gentle pause.",
+    "sitesHeading": "Your sites",
+    "sitesDescription": "You can change these whenever you like.",
+    "siteInputLabel": "Add a website",
+    "sitePlaceholder": "reddit.com",
+    "addButton": "Add site",
+    "youtubeWarning": "YouTube is also used for studying, so it isn’t included by default. Add it only if it’s one of your personal traps.",
+    "toggleSite": "Pause on",
+    "removeButton": "Remove",
+    "invalidDomain": "Enter a website address, like reddit.com.",
+    "duplicateDomain": "That site is already on your list.",
+    "cooldownLabel": "Wait before showing another pause",
+    "cooldownDescription": "After you continue, Focus Friend will leave that site alone for this long.",
+    "minutes": "minutes",
+    "footerNote": "Your choices are saved in Chrome. No account needed."
+  },
+  "popup": {
+    "on": "I’m here with you 🌿",
+    "off": "I’m taking a little pause.",
+    "turnOn": "Turn me back on",
+    "turnOff": "Pause Focus Friend",
+    "language": "বাংলায় দেখাও",
+    "settings": "Choose your sites"
+  }
+}
