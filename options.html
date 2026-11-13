@@ -34,6 +34,10 @@
           <button class="primary-button" type="submit" id="add-button"></button>
         </form>
         <p class="hint" id="youtube-warning"></p>
+        <div class="access-control">
+          <button class="secondary-button" type="button" id="grant-access-button"></button>
+          <p class="form-message" id="permission-message" role="status" aria-live="polite"></p>
+        </div>
         <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
 
         <ul id="site-list" class="site-list"></ul>
@@ -46,6 +50,16 @@
           <input id="debounce-input" type="number" min="1" max="240" step="1">
           <span id="minutes-label"></span>
         </div>
+      </section>
+
+      <section class="checkin-card">
+        <label class="checkin-setting">
+          <input id="checkin-enabled" type="checkbox">
+          <span class="checkin-copy">
+            <strong id="checkin-label"></strong>
+            <span class="muted" id="checkin-description"></span>
+          </span>
+        </label>
       </section>
 
       <p class="footer-note" id="footer-note"></p>

@@ -18,7 +18,8 @@ const DEFAULT_SETTINGS = {
   ],
   language: "bn",
   enabled: true,
-  debounce_minutes: 20
+  debounce_minutes: 20,
+  continue_checkin_enabled: false
 };
 
 // Read saved choices. If this is the first run, save the defaults so they persist.
@@ -41,7 +42,8 @@ async function getSettings() {
       enabled_sites: settings.enabled_sites,
       language: settings.language,
       enabled: settings.enabled,
-      debounce_minutes: settings.debounce_minutes
+      debounce_minutes: settings.debounce_minutes,
+      continue_checkin_enabled: settings.continue_checkin_enabled
     });
   }
 
@@ -55,7 +57,8 @@ async function saveSettings(settings) {
     enabled_sites: settings.enabled_sites,
     language: settings.language,
     enabled: settings.enabled,
-    debounce_minutes: settings.debounce_minutes
+    debounce_minutes: settings.debounce_minutes,
+    continue_checkin_enabled: settings.continue_checkin_enabled
   });
 }
 

@@ -3,7 +3,8 @@
   "name": "Focus Friend",
   "version": "0.1.0",
   "description": "A warm pause before the sites you choose.",
-  "permissions": ["storage"],
+  "permissions": ["storage", "scripting"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
   "background": {
     "service_worker": "background.js"
   },
@@ -11,4 +12,4 @@
     "default_popup": "popup.html"
   },
   "options_page": "options.html"
-} 
+}

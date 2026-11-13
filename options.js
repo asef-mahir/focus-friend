@@ -6,6 +6,11 @@ const copyByLanguage = {
 let settings;
 let copy;
 
+function setPermissionMessage(message, text, state) {
+  message.textContent = text;
+  message.dataset.state = state;
+}
+
 async function loadCopy(language) {
   const response = await fetch(chrome.runtime.getURL(`content/${copyByLanguage[language]}.json`));
   return response.json();
@@ -25,11 +30,15 @@ async function render() {
   document.querySelector("#site-input").placeholder = text.sitePlaceholder;
   document.querySelector("#add-button").textContent = text.addButton;
   document.querySelector("#youtube-warning").textContent = text.youtubeWarning;
+  document.querySelector("#grant-access-button").textContent = text.grantAccessButton;
   document.querySelector("#cooldown-label").textContent = text.cooldownLabel;
   document.querySelector("#cooldown-description").textContent = text.cooldownDescription;
   document.querySelector("#minutes-label").textContent = text.minutes;
   document.querySelector("#footer-note").textContent = text.footerNote;
   document.querySelector("#debounce-input").value = settings.debounce_minutes;
+  document.querySelector("#checkin-label").textContent = text.checkinLabel;
+  document.querySelector("#checkin-description").textContent = text.checkinDescription;
+  document.querySelector("#checkin-enabled").checked = settings.continue_checkin_enabled;
 
   document.querySelectorAll("[data-language]").forEach((button) => {
     button.setAttribute("aria-pressed", String(button.dataset.language === settings.language));
@@ -99,8 +108,33 @@ document.querySelector("#add-site-form").addEventListener("submit", async (event
   settings.enabled_sites = [...settings.enabled_sites, domain];
   await FocusStorage.saveSettings(settings);
   input.value = "";
-  message.textContent = "";
+  message.textContent = copy.settings.siteAddedAccessNeeded;
   await render();
+});
+
+document.querySelector("#grant-access-button").addEventListener("click", async () => {
+  const message = document.querySelector("#permission-message");
+  const origins = settings.enabled_sites.flatMap((domain) => [
+    `http://*.${domain}/*`,
+    `https://*.${domain}/*`
+  ]);
+
+  if (!origins.length) {
+    setPermissionMessage(message, copy.settings.noEnabledSites, "error");
+    return;
+  }
+
+  try {
+    const granted = await chrome.permissions.request({ origins });
+    setPermissionMessage(
+      message,
+      granted ? copy.settings.permissionGranted : copy.settings.permissionDenied,
+      granted ? "success" : "error"
+    );
+  } catch (error) {
+    console.error("Focus Friend permission request failed:", error);
+    setPermissionMessage(message, copy.settings.permissionRequestError, "error");
+  }
 });
 
 document.querySelectorAll("[data-language]").forEach((button) => {
@@ -118,9 +152,17 @@ document.querySelector("#debounce-input").addEventListener("change", async (even
   event.target.value = settings.debounce_minutes;
 });
 
+document.querySelector("#checkin-enabled").addEventListener("change", async (event) => {
+  settings.continue_checkin_enabled = event.target.checked;
+  await FocusStorage.saveSettings(settings);
+  if (!settings.continue_checkin_enabled) {
+    await chrome.storage.local.remove("not_now_daily_counts");
+  }
+});
+
 chrome.storage.onChanged.addListener(async (changes, areaName) => {
   if (areaName !== "sync" || !settings) return;
-  if (["sites", "enabled_sites", "language", "debounce_minutes"].some((key) => key in changes)) {
+  if (["sites", "enabled_sites", "language", "enabled", "debounce_minutes", "continue_checkin_enabled"].some((key) => key in changes)) {
     settings = await FocusStorage.getSettings();
     await render();
   }

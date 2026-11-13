@@ -77,7 +77,12 @@ h2 { margin-bottom: 6px; font-size: 20px; }
 .primary-button:hover { background: #314a38; }
 
 .hint { margin: 10px 0 0; color: #69756c; font-size: 13px; }
+.access-control { margin-top: 14px; }
+.secondary-button { border: 0; border-radius: 10px; padding: 10px 14px; background: #e7eee2; color: #293c2e; font-weight: 650; cursor: pointer; }
+.secondary-button:hover { background: #dce9d4; }
 .form-message { min-height: 20px; margin: 8px 0 0; color: #9a573c; font-size: 13px; }
+.form-message[data-state="success"] { color: #456b4d; }
+.form-message[data-state="error"] { color: #9a573c; }
 
 .site-list { display: grid; gap: 8px; margin: 14px 0 0; padding: 0; list-style: none; }
 .site-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-radius: 12px; background: #f7f8f4; }
@@ -91,12 +96,18 @@ h2 { margin-bottom: 6px; font-size: 20px; }
 .cooldown-card .muted { grid-column: 1; font-size: 14px; }
 .cooldown-control { display: flex; align-items: center; gap: 8px; grid-column: 2; grid-row: 1 / span 2; }
 .cooldown-control input { width: 78px; }
+.checkin-card { margin-top: 16px; padding: 20px 24px; border: 1px solid #e2e5dc; border-radius: 16px; background: #fff; }
+.checkin-setting { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; }
+.checkin-setting input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: #55775b; }
+.checkin-copy { display: grid; gap: 6px; }
+.checkin-copy strong { font-size: 15px; }
+.checkin-copy .muted { font-size: 13px; line-height: 1.5; }
 .footer-note { margin: 20px 4px 0; color: #69756c; font-size: 13px; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
 @media (max-width: 560px) {
   .page { margin: 28px auto; }
-  .settings-card, .cooldown-card { padding: 18px; }
+  .settings-card, .cooldown-card, .checkin-card { padding: 18px; }
   .section-heading { flex-direction: column; }
   .add-site-form { flex-direction: column; }
   .cooldown-card { grid-template-columns: 1fr; }

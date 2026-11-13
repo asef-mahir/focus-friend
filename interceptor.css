@@ -1,0 +1,16 @@
+/* Registered only for enabled sites where the user granted host access. */
+html {
+  visibility: hidden !important;
+}
+
+#focus-friend-overlay-host {
+  all: initial !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483647 !important;
+  display: block !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  visibility: visible !important;
+  pointer-events: none !important;
+}
