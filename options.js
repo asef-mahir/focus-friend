@@ -40,11 +40,38 @@ async function render() {
   document.querySelector("#checkin-description").textContent = text.checkinDescription;
   document.querySelector("#checkin-enabled").checked = settings.continue_checkin_enabled;
 
+  document.querySelector("#time-checkin-label").textContent = text.timeCheckinLabel;
+  document.querySelector("#time-checkin-description").textContent = text.timeCheckinDescription;
+  document.querySelector("#time-checkin-minutes-label").textContent = text.minutes;
+  document.querySelector("#time-checkin-enabled").checked = Boolean(settings.time_checkin_enabled);
+  document.querySelector("#time-checkin-minutes").value = settings.time_checkin_minutes || 20;
+  const timeControl = document.querySelector("#time-checkin-control");
+  if (timeControl) {
+    timeControl.style.opacity = settings.time_checkin_enabled ? "1" : "0.5";
+    timeControl.style.pointerEvents = settings.time_checkin_enabled ? "auto" : "none";
+  }
+
   document.querySelectorAll("[data-language]").forEach((button) => {
     button.setAttribute("aria-pressed", String(button.dataset.language === settings.language));
   });
 
   renderSites(text);
+  void updatePermissionStatus();
+}
+
+async function updatePermissionStatus() {
+  const message = document.querySelector("#permission-message");
+  if (!message || !settings?.enabled_sites?.length) return;
+  const origins = settings.enabled_sites.flatMap((domain) => [
+    `http://*.${domain}/*`,
+    `https://*.${domain}/*`
+  ]);
+  try {
+    const hasAll = await chrome.permissions.contains({ origins });
+    if (hasAll) {
+      setPermissionMessage(message, copy.settings.permissionGranted, "success");
+    }
+  } catch (_) {}
 }
 
 function renderSites(text) {
@@ -160,9 +187,29 @@ document.querySelector("#checkin-enabled").addEventListener("change", async (eve
   }
 });
 
+document.querySelector("#time-checkin-enabled").addEventListener("change", async (event) => {
+  settings.time_checkin_enabled = event.target.checked;
+  const timeControl = document.querySelector("#time-checkin-control");
+  if (timeControl) {
+    timeControl.style.opacity = settings.time_checkin_enabled ? "1" : "0.5";
+    timeControl.style.pointerEvents = settings.time_checkin_enabled ? "auto" : "none";
+  }
+  await FocusStorage.saveSettings(settings);
+  if (!settings.time_checkin_enabled) {
+    await chrome.storage.local.remove("daily_active_time");
+  }
+});
+
+document.querySelector("#time-checkin-minutes").addEventListener("change", async (event) => {
+  const value = Number.parseInt(event.target.value, 10);
+  settings.time_checkin_minutes = Math.min(180, Math.max(1, Number.isFinite(value) ? value : 20));
+  await FocusStorage.saveSettings(settings);
+  event.target.value = settings.time_checkin_minutes;
+});
+
 chrome.storage.onChanged.addListener(async (changes, areaName) => {
   if (areaName !== "sync" || !settings) return;
-  if (["sites", "enabled_sites", "language", "enabled", "debounce_minutes", "continue_checkin_enabled"].some((key) => key in changes)) {
+  if (["sites", "enabled_sites", "language", "enabled", "debounce_minutes", "continue_checkin_enabled", "time_checkin_enabled", "time_checkin_minutes"].some((key) => key in changes)) {
     settings = await FocusStorage.getSettings();
     await render();
   }

@@ -80,7 +80,25 @@ chrome.permissions.onRemoved.addListener(() => {
 
 // Content scripts ask the service worker for packaged language text.
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (sender.id !== chrome.runtime.id || message?.type !== "getCopy") return;
+  if (sender.id !== chrome.runtime.id) return;
+
+  if (message?.type === "returnToNewTab") {
+    const tabId = sender.tab?.id;
+    if (typeof tabId !== "number") {
+      sendResponse({ error: "The current tab was unavailable." });
+      return;
+    }
+
+    chrome.tabs.update(tabId, { url: "chrome://newtab/" })
+      .then(() => sendResponse({ ok: true }))
+      .catch((error) => {
+        console.error("Could not return to a new tab:", error);
+        sendResponse({ error: "Chrome could not open a new tab." });
+      });
+    return true;
+  }
+
+  if (message?.type !== "getCopy") return;
   if (message.language !== "bn" && message.language !== "en") return;
 
   fetch(chrome.runtime.getURL(`content/${message.language}.json`))

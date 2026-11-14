@@ -5,9 +5,21 @@ function render() {
   const text = copy.popup;
   document.documentElement.lang = settings.language;
   document.querySelector("#status").textContent = settings.enabled ? text.on : text.off;
-  document.querySelector("#toggle-button").textContent = settings.enabled ? text.turnOff : text.turnOn;
+
+  const toggleBtn = document.querySelector("#toggle-button");
+  toggleBtn.textContent = settings.enabled ? text.turnOff : text.turnOn;
+  toggleBtn.className = settings.enabled ? "main-button" : "main-button paused";
+
+  const indicator = document.querySelector("#status-indicator");
+  if (indicator) {
+    indicator.className = settings.enabled ? "status-indicator" : "status-indicator paused";
+  }
+  document.body.classList.toggle("paused", !settings.enabled);
+
   document.querySelector("#language-button").textContent = text.language;
-  document.querySelector("#settings-button").textContent = text.settings;
+  document.querySelector("#language-button").setAttribute("aria-label", text.language);
+  document.querySelector("#settings-title").textContent = text.settingsTitle;
+  document.querySelector("#settings-desc").textContent = text.settingsDesc;
 }
 
 async function refresh() {

@@ -10,11 +10,31 @@
   </head>
   <body>
     <main class="popup">
-      <p class="eyebrow">FOCUS FRIEND</p>
-      <h1 id="status"></h1>
-      <button class="main-button" id="toggle-button" type="button"></button>
-      <button class="secondary-button" id="language-button" type="button"></button>
-      <button class="settings-button" id="settings-button" type="button"></button>
+      <div class="popup-top">
+        <div class="popup-header">
+        <div class="brand-row">
+          <img class="brand-logo" src="icons/icon48.png" alt="Focus Friend" width="22" height="22">
+          <span class="status-indicator" id="status-indicator"></span>
+          <p class="eyebrow">FOCUS FRIEND</p>
+        </div>
+        <button class="lang-button" id="language-button" type="button"></button>
+        </div>
+        <h1 id="status"></h1>
+      </div>
+
+      <div class="actions-group">
+        <button class="main-button" id="toggle-button" type="button"></button>
+      </div>
+
+      <div class="settings-divider"></div>
+
+      <button class="settings-row" id="settings-button" type="button">
+        <div class="settings-text">
+          <strong id="settings-title"></strong>
+          <span class="settings-desc" id="settings-desc"></span>
+        </div>
+        <span class="settings-arrow">→</span>
+      </button>
     </main>
   </body>
 </html>

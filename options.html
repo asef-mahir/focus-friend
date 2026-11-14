@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Focus Friend — Settings</title>
     <link rel="stylesheet" href="options.css">
+    <link rel="icon" href="icons/icon48.png">
     <script src="storage.js" defer></script>
     <script src="options.js" defer></script>
   </head>
@@ -60,6 +61,20 @@
             <span class="muted" id="checkin-description"></span>
           </span>
         </label>
+      </section>
+
+      <section class="checkin-card">
+        <label class="checkin-setting">
+          <input id="time-checkin-enabled" type="checkbox">
+          <span class="checkin-copy">
+            <strong id="time-checkin-label"></strong>
+            <span class="muted" id="time-checkin-description"></span>
+          </span>
+        </label>
+        <div class="cooldown-control" id="time-checkin-control" style="margin-top: 14px; margin-left: 30px; display: flex; align-items: center; gap: 8px;">
+          <input id="time-checkin-minutes" type="number" min="1" max="180" step="1" style="width: 76px; padding: 7px 10px; border: 1px solid #d4ded6; border-radius: 8px; font: inherit;">
+          <span id="time-checkin-minutes-label"></span>
+        </div>
       </section>
 
       <p class="footer-note" id="footer-note"></p>

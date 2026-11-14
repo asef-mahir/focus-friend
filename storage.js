@@ -19,7 +19,9 @@ const DEFAULT_SETTINGS = {
   language: "bn",
   enabled: true,
   debounce_minutes: 20,
-  continue_checkin_enabled: false
+  continue_checkin_enabled: true,
+  time_checkin_enabled: false,
+  time_checkin_minutes: 20
 };
 
 // Read saved choices. If this is the first run, save the defaults so they persist.
@@ -35,6 +37,15 @@ async function getSettings() {
   if (settings.language !== "bn" && settings.language !== "en") {
     settings.language = DEFAULT_SETTINGS.language;
   }
+  if (typeof settings.continue_checkin_enabled !== "boolean") {
+    settings.continue_checkin_enabled = DEFAULT_SETTINGS.continue_checkin_enabled;
+  }
+  if (typeof settings.time_checkin_enabled !== "boolean") {
+    settings.time_checkin_enabled = DEFAULT_SETTINGS.time_checkin_enabled;
+  }
+  if (typeof settings.time_checkin_minutes !== "number") {
+    settings.time_checkin_minutes = DEFAULT_SETTINGS.time_checkin_minutes;
+  }
 
   if (!Array.isArray(saved.sites)) {
     await chrome.storage.sync.set({
@@ -43,7 +54,15 @@ async function getSettings() {
       language: settings.language,
       enabled: settings.enabled,
       debounce_minutes: settings.debounce_minutes,
-      continue_checkin_enabled: settings.continue_checkin_enabled
+      continue_checkin_enabled: settings.continue_checkin_enabled,
+      time_checkin_enabled: settings.time_checkin_enabled,
+      time_checkin_minutes: settings.time_checkin_minutes
+    });
+  } else if (typeof saved.continue_checkin_enabled !== "boolean" || typeof saved.time_checkin_enabled !== "boolean") {
+    await chrome.storage.sync.set({
+      continue_checkin_enabled: settings.continue_checkin_enabled,
+      time_checkin_enabled: settings.time_checkin_enabled,
+      time_checkin_minutes: settings.time_checkin_minutes
     });
   }
 
@@ -58,7 +77,9 @@ async function saveSettings(settings) {
     language: settings.language,
     enabled: settings.enabled,
     debounce_minutes: settings.debounce_minutes,
-    continue_checkin_enabled: settings.continue_checkin_enabled
+    continue_checkin_enabled: settings.continue_checkin_enabled,
+    time_checkin_enabled: settings.time_checkin_enabled,
+    time_checkin_minutes: settings.time_checkin_minutes
   });
 }
 
