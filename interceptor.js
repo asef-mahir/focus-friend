@@ -1,4 +1,9 @@
 (() => {
+  // Guards against a second copy being injected when the extension is switched
+  // back on in a tab that already has a running instance.
+  if (globalThis.__focusFriendInstance) return;
+  globalThis.__focusFriendInstance = true;
+
   const HOST_ID = "focus-friend-overlay-host";
   const DEFAULT_COOLDOWN_MINUTES = 20;
   const BREATH_CYCLE_MS = 6_000;
@@ -193,6 +198,21 @@
         }
 
         .panel { position: relative; width: min(520px, 100%); }
+        /* Shown for the moment between mounting the cover and the first panel. */
+        .splash { display: grid; place-items: center; min-height: 140px; }
+        .splash::before {
+          content: "";
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background: #46765a;
+          opacity: 0.3;
+          animation: splash-breathe 1.6s ease-in-out infinite;
+        }
+        @keyframes splash-breathe {
+          0%, 100% { transform: scale(0.82); opacity: 0.24; }
+          50% { transform: scale(1.08); opacity: 0.46; }
+        }
         h1 { margin: 0 0 12px; font-size: clamp(26px, 5vw, 38px); line-height: 1.2; color: #284b39; }
         p { margin: 0 0 22px; color: #587461; }
         .fresh p { color: #587461; }
@@ -1170,6 +1190,7 @@
 
         /* reduced-motion overrides */
         @media (prefers-reduced-motion: reduce) {
+          .splash::before { animation: none !important; opacity: 0.4; }
           .breath-lungs-wrap, .lung-lobe-group, .lung-air-pulse, .alveoli-nodes, .bronchial-tree {
             animation: none !important;
             transition: none !important;
@@ -1191,7 +1212,9 @@
         }
       </style>
       <main class="screen fresh">
-        <section class="panel" role="dialog" aria-modal="true" aria-live="polite"></section>
+        <section class="panel" role="dialog" aria-modal="true" aria-live="polite">
+          <div class="splash" aria-hidden="true"></div>
+        </section>
       </main>
     `;
     page.appendChild(host);
@@ -1364,16 +1387,21 @@
     const numberFactEntry = copy.number_facts ? copy.number_facts[String(cycleCount)] : null;
     const isSwerve = !numberFactEntry;
     let selectedFactText = "";
+    let factSource = "number";
+    let factIndex = 0;
 
     if (numberFactEntry) {
       if (Array.isArray(numberFactEntry)) {
-        const item = numberFactEntry[Math.floor(Math.random() * numberFactEntry.length)];
+        factIndex = Math.floor(Math.random() * numberFactEntry.length);
+        const item = numberFactEntry[factIndex];
         selectedFactText = typeof item === "string" ? item : item.text;
       } else {
         selectedFactText = typeof numberFactEntry === "string" ? numberFactEntry : numberFactEntry.text;
       }
     } else if (copy.general_facts && copy.general_facts.length) {
-      const item = copy.general_facts[Math.floor(Math.random() * copy.general_facts.length)];
+      factSource = "general";
+      factIndex = Math.floor(Math.random() * copy.general_facts.length);
+      const item = copy.general_facts[factIndex];
       selectedFactText = typeof item === "string" ? item : item.text;
     }
 
@@ -1396,8 +1424,37 @@
     const replyPool = (copy.cycle_reply && copy.cycle_reply[replySlot]) || ["{n} বার শ্বাসচক্র সম্পন্ন করেছ 🌿"];
     const { index: replyIndex } = await pickVoiceLineWithIndex(replySlotKey, replyPool);
 
-    factSelection = { factText: selectedFactText, isSwerve, introIndex, replySlot, replyIndex };
+    factSelection = {
+      factText: selectedFactText,
+      factSource,
+      factIndex,
+      isSwerve,
+      introIndex,
+      replySlot,
+      replyIndex
+    };
     renderFactReveal();
+  }
+
+  // Re-read the fact from the current language bank so a mid-screen language
+  // switch does not leave one language's sentence on the other language's page.
+  function resolveFactText(selection) {
+    if (!selection) return "";
+    try {
+      if (selection.factSource === "general") {
+        const item = copy.general_facts?.[selection.factIndex];
+        if (item) return typeof item === "string" ? item : item.text;
+      } else {
+        const entry = copy.number_facts?.[String(cycleCount)];
+        if (entry) {
+          const item = Array.isArray(entry) ? entry[selection.factIndex] : entry;
+          if (item) return typeof item === "string" ? item : item.text;
+        }
+      }
+    } catch (_) {
+      // Fall back to the sentence captured when the screen was opened.
+    }
+    return selection.factText;
   }
 
   function renderFactReveal() {
@@ -1405,7 +1462,7 @@
     view = "factReveal";
     setFreshTheme(true);
 
-    const fact = factSelection.factText;
+    const fact = resolveFactText(factSelection);
     const introPool = factSelection.isSwerve ? copy.swerve_intro : copy.fact_intro;
     const introTemplate = (introPool && introPool[factSelection.introIndex]) || introPool[0] || "";
     const intro = introTemplate.replaceAll("{n}", String(cycleCount));
@@ -1469,7 +1526,7 @@
 
   function updateVentWords(mirror, text, isSpaceOnly) {
     mirror.replaceChildren();
-    if (!text) return;
+    if (!text) return 0;
 
     const tokens = text.split(/(\s+)/);
     let wordCount = 0;
@@ -1552,12 +1609,13 @@
 
   function updateRageUI(editor, rageBar, burnButton, wordCount) {
     if (!rageBar || !editor || !burnButton) return;
-    const pct = Math.min(wordCount / RAGE_FULL_WORDS, 1);
+    const safeWordCount = Number.isFinite(wordCount) ? Math.max(0, wordCount) : 0;
+    const pct = Math.min(safeWordCount / RAGE_FULL_WORDS, 1);
     const beatDuration = 4.2 - pct * 3;
     const sparkHue = Math.round(44 - pct * 36);
     editor.style.setProperty("--rage-beat-duration", `${beatDuration.toFixed(2)}s`);
     editor.style.setProperty("--spark-color", `hsl(${sparkHue} 100% 58%)`);
-    if (wordCount > 0) editor.classList.remove("idle-breathing");
+    if (safeWordCount > 0) editor.classList.remove("idle-breathing");
     rageBar.style.width = `${Math.round(pct * 100)}%`;
 
     // Remove all rage classes first
@@ -2560,9 +2618,13 @@
     else if (view === "ventAfter") showVentAfterExit();
     else if (view === "goodbye") void showGoodbye(true);
     else if (view === "returning") showReturning();
+    else if (view === "returnFailed") showReturnFailed();
   }
 
   async function readSettings() {
+    // storage.js is registered alongside this file, so every surface validates
+    // and repairs settings the same way.
+    if (globalThis.FocusStorage?.getSettings) return FocusStorage.getSettings();
     return chrome.storage.sync.get({
       enabled: true,
       enabled_sites: [],
@@ -2583,7 +2645,9 @@
 
   async function loadCopy(language) {
     const result = await chrome.runtime.sendMessage({ type: "getCopy", language });
-    if (result?.error) throw new Error(result.error);
+    if (!result || result.error) {
+      throw new Error(result?.error || "Focus Friend could not load its language copy.");
+    }
     return result;
   }
 
@@ -2652,20 +2716,45 @@
     }
   }
 
+  // Used when the current site is no longer paused: stop counting time, take
+  // away any leftover pill, and forget the stale domain/settings.
+  function stopTrackingForInactiveSite() {
+    if (gentlePillHost) {
+      gentlePillHost.remove();
+      gentlePillHost = null;
+    }
+    if (activeTrackerTimer) {
+      clearInterval(activeTrackerTimer);
+      activeTrackerTimer = null;
+    }
+    activeDomain = null;
+    settings = null;
+  }
+
   async function disablePauseForActiveSite() {
-    if (!activeDomain) {
+    const domain = activeDomain;
+    if (!domain) {
       revealPage();
       return;
     }
+
+    // Show the confirmation first. The settings change below will notify this
+    // same page; the flag keeps that notification from wiping the message.
+    makePanel(copy?.interception?.disabledSitePauseResponse || "এই সাইটের জন্য বিরতি বন্ধ করা হলো 🌱");
+    pendingDisableConfirmation = true;
+    transitionTimer = setTimeout(() => {
+      pendingDisableConfirmation = false;
+      revealPage();
+    }, 1400);
+
     try {
-      const saved = await chrome.storage.sync.get({ enabled_sites: [] });
-      const enabledSites = Array.isArray(saved.enabled_sites) ? saved.enabled_sites : [];
+      const latest = await readSettings();
+      const enabledSites = Array.isArray(latest.enabled_sites) ? latest.enabled_sites : [];
       await chrome.storage.sync.set({
-        enabled_sites: enabledSites.filter((domain) => domain !== activeDomain)
+        enabled_sites: enabledSites.filter((entry) => entry !== domain)
       });
-      makePanel(copy?.interception?.disabledSitePauseResponse || "এই সাইটের জন্য বিরতি বন্ধ করা হলো 🌱");
-      transitionTimer = setTimeout(revealPage, 1400);
     } catch (error) {
+      pendingDisableConfirmation = false;
       console.error("Focus Friend could not disable site pause:", error);
       revealPage();
     }
@@ -2785,28 +2874,52 @@
   async function returnToWork() {
     const returnUrl = getSafeReturnUrl();
     if (returnUrl) {
-      window.location.replace(returnUrl);
-      return;
+      try {
+        window.location.replace(returnUrl);
+        return true;
+      } catch (error) {
+        console.error("Focus Friend could not open the previous page:", error);
+      }
     }
 
     try {
       const result = await chrome.runtime.sendMessage({ type: "returnToNewTab" });
       if (result?.error) throw new Error(result.error);
+      return true;
     } catch (error) {
-      // Keep the distracting page covered if Chrome cannot open the neutral fallback.
       console.error("Focus Friend could not return to a work page:", error);
+      return false;
     }
+  }
+
+  function showReturnFailed() {
+    view = "returnFailed";
+    setFreshTheme(true);
+    const { actions } = makePanel(copy.interception.returnFailed);
+    addButton(actions, copy.interception.retryReturn, "primary", beginReturn);
+    addButton(actions, copy.interception.stayHere, "secondary", revealPage);
   }
 
   function beginReturn() {
     showReturning();
-    transitionTimer = setTimeout(() => void returnToWork(), 2500);
+    // A completed pause counts as today's visit; otherwise the next page load
+    // would show the pause screen again straight away.
+    void rememberSiteHit().catch(() => {});
+    transitionTimer = setTimeout(() => {
+      void (async () => {
+        const returned = await returnToWork();
+        if (!returned) showReturnFailed();
+      })();
+    }, 2500);
   }
 
   /* ── Gentle In-Session Active Time Check-In ─────────── */
   const GENTLE_PILL_HOST_ID = "focus-friend-gentle-pill-host";
   let gentlePillHost = null;
+  let pillDismissedDomain = null;
+  let pendingDisableConfirmation = false;
   let activeTrackerTimer = null;
+  let activityListenersAttached = false;
   let lastUserActivityTime = Date.now();
   let unsavedActiveSeconds = 0;
   const IDLE_THRESHOLD_MS = 120_000; // 2 minutes AFK pauses active time tracking
@@ -2816,6 +2929,8 @@
   }
 
   function setupUserActivityListeners() {
+    if (activityListenersAttached) return;
+    activityListenersAttached = true;
     window.addEventListener("pointerdown", onUserActiveInteraction, { passive: true });
     window.addEventListener("keydown", onUserActiveInteraction, { passive: true });
     window.addEventListener("scroll", onUserActiveInteraction, { passive: true });
@@ -2854,7 +2969,7 @@
     const { totalSeconds, prompted } = result;
     const targetSeconds = (settings.time_checkin_minutes || 20) * 60;
 
-    if (totalSeconds >= targetSeconds && !prompted.includes(activeDomain) && !host && !gentlePillHost) {
+    if (totalSeconds >= targetSeconds && !prompted.includes(activeDomain) && !host && !gentlePillHost && pillDismissedDomain !== activeDomain) {
       void showGentleTimePill();
     }
   }
@@ -2873,7 +2988,9 @@
       unsavedActiveSeconds += 1;
 
       if (unsavedActiveSeconds >= 15) {
-        void checkActiveTimeThreshold();
+        checkActiveTimeThreshold().catch((error) => {
+          console.warn("Focus Friend could not check active time:", error);
+        });
       }
     }, 1000);
   }
@@ -3018,6 +3135,8 @@
 
     function dismissPill() {
       if (!gentlePillHost) return;
+      // Keep it gone for the rest of this page even if the storage write fails.
+      pillDismissedDomain = activeDomain;
       wrap.style.animation = "pill-slide-out 250ms ease forwards";
       setTimeout(() => {
         if (gentlePillHost) {
@@ -3027,7 +3146,10 @@
       }, 240);
     }
 
-    closeBtn.addEventListener("click", dismissPill);
+    closeBtn.addEventListener("click", async () => {
+      await markSitePromptedToday(activeDomain);
+      dismissPill();
+    });
 
     continueBtn.addEventListener("click", async () => {
       await markSitePromptedToday(activeDomain);
@@ -3073,7 +3195,7 @@
       copy = await loadCopy(settings.language);
       if (!host) mountCover();
       view = "greeting";
-      showGreeting();
+      await showGreeting();
     } catch (error) {
       if (!/extension context invalidated/i.test(error?.message || "")) {
         console.error("Focus Friend could not show the pause screen:", error);
@@ -3101,14 +3223,40 @@
   chrome.storage.onChanged.addListener(async (changes, areaName) => {
     if (areaName !== "sync") return;
 
-    const latest = await readSettings();
+    let latest;
+    try {
+      latest = await readSettings();
+    } catch (error) {
+      console.warn("Focus Friend could not refresh its settings:", error);
+      return;
+    }
+
     const matchingDomain = latest.enabled
       ? findMatchingDomain(latest.enabled_sites)
       : null;
 
     if (!matchingDomain) {
-      revealPage();
+      stopTrackingForInactiveSite();
+      if (!pendingDisableConfirmation) revealPage();
       return;
+    }
+
+    if ("enabled" in changes || "enabled_sites" in changes) {
+      const justEnabled = changes.enabled?.oldValue === false && latest.enabled === true;
+      const previousSites = Array.isArray(changes.enabled_sites?.oldValue)
+        ? changes.enabled_sites.oldValue
+        : [];
+      const hostname = location.hostname.toLowerCase();
+      const newlyEnabled = latest.enabled_sites.some((domain) =>
+        !previousSites.includes(domain)
+        && (hostname === domain || hostname.endsWith(`.${domain}`))
+      );
+
+      // Turning the extension back on should pause this tab now, not after a refresh.
+      if (!host && (justEnabled || newlyEnabled)) {
+        void checkAndShow();
+        return;
+      }
     }
 
     if ("continue_checkin_enabled" in changes) {
@@ -3129,8 +3277,12 @@
 
     if ("language" in changes && host) {
       settings = latest;
-      copy = await loadCopy(settings.language);
-      renderCurrentView();
+      try {
+        copy = await loadCopy(settings.language);
+        renderCurrentView();
+      } catch (error) {
+        console.warn("Focus Friend could not switch language:", error);
+      }
     }
   });
 

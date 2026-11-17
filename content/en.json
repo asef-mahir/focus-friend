@@ -68,6 +68,9 @@
     "breathingGoBack": "Back to work 🌱",
     "backToWork": "Back to it 🌱",
     "returning": "Taking a moment, then heading back...",
+    "returnFailed": "Chrome couldn't open a new tab. You can try again, or stay on this page.",
+    "retryReturn": "Try again",
+    "stayHere": "Stay here",
     "ventOfferLink": "Feeling angry? 😤"
   },
   "cycle_reply": {
@@ -217,7 +220,7 @@
     ],
     "6": [
       {
-        "text": "Every single insect species on Earth is anatomically defined by having exactly 6 legs.",
+        "text": "Adult insects have six legs — one pair on each of the thorax's three segments. Larvae like caterpillars grow extra fleshy legs, and a few species have fewer.",
         "needs_verify": true
       },
       {
@@ -519,7 +522,7 @@
         "needs_verify": true
       },
       {
-        "text": "The ice giant planet Uranus is orbited by 27 known moons, all named after characters created by William Shakespeare and Alexander Pope.",
+        "text": "Uranus has 29 known moons. Twenty-seven are named after characters from Shakespeare and Alexander Pope; the two newest are still unnamed.",
         "needs_verify": true
       }
     ],
@@ -617,7 +620,7 @@
         "needs_verify": true
       },
       {
-        "text": "When human core body temperature drops below 34°C (93.2°F), moderate hypothermia sets in, demanding immediate warming.",
+        "text": "Hypothermia begins below 35°C (95°F): 32–35°C is mild, 28–32°C is moderate, and below 28°C is severe.",
         "needs_verify": true
       }
     ],

@@ -1,4 +1,7 @@
+importScripts("storage.js");
+
 const INTERCEPTOR_SCRIPT_ID = "focus-friend-interceptor";
+const INTERCEPTOR_FILES = ["storage.js", "interceptor.js"];
 let refreshQueue = Promise.resolve();
 
 function matchPatterns(domain) {
@@ -6,10 +9,7 @@ function matchPatterns(domain) {
 }
 
 async function syncInterceptor() {
-  const settings = await chrome.storage.sync.get({
-    enabled: true,
-    enabled_sites: []
-  });
+  const settings = await FocusStorage.getSettings();
 
   const matches = [];
   const enabledSites = Array.isArray(settings.enabled_sites) ? settings.enabled_sites : [];
@@ -33,17 +33,64 @@ async function syncInterceptor() {
       id: INTERCEPTOR_SCRIPT_ID,
       matches,
       css: ["interceptor.css"],
-      js: ["interceptor.js"],
+      js: INTERCEPTOR_FILES,
       runAt: "document_start",
       persistAcrossSessions: true
     }]);
   }
 }
 
+// Registration only affects future page loads. When the user turns the extension
+// back on (or grants access to a new site), put the pause into tabs that are
+// already open. interceptor.js guards against stacking two overlays.
+async function injectIntoOpenTabs(domains) {
+  let allowedDomains = domains;
+  if (!allowedDomains) {
+    const settings = await FocusStorage.getSettings();
+    if (!settings.enabled) return;
+    allowedDomains = settings.enabled_sites;
+  }
+  if (!Array.isArray(allowedDomains) || allowedDomains.length === 0) return;
+
+  let tabs = [];
+  try {
+    tabs = await chrome.tabs.query({});
+  } catch (error) {
+    console.warn("Focus Friend could not list open tabs:", error);
+    return;
+  }
+
+  for (const tab of tabs) {
+    if (typeof tab.id !== "number" || typeof tab.url !== "string") continue;
+
+    let hostname;
+    try {
+      hostname = new URL(tab.url).hostname.toLowerCase();
+    } catch {
+      continue;
+    }
+
+    const wanted = allowedDomains.some((domain) =>
+      hostname === domain || hostname.endsWith(`.${domain}`)
+    );
+    if (!wanted) continue;
+
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: INTERCEPTOR_FILES
+      });
+    } catch {
+      // Tabs without host access, chrome:// pages, and the Web Store reject injection.
+    }
+  }
+}
+
 // Serialize refreshes so quick setting changes do not race each other.
-function scheduleInterceptorSync() {
+function scheduleInterceptorSync({ inject = false, domains = null } = {}) {
   refreshQueue = refreshQueue
     .then(syncInterceptor)
+    .then(() => (inject ? injectIntoOpenTabs(domains) : undefined))
     .catch((error) => console.error("Could not update Focus Friend site access:", error));
   return refreshQueue;
 }
@@ -66,12 +113,26 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   }
 
   if (areaName === "sync" && ["enabled", "enabled_sites"].some((key) => key in changes)) {
-    void scheduleInterceptorSync();
+    const justEnabled = changes.enabled?.oldValue === false && changes.enabled?.newValue === true;
+    const previousSites = Array.isArray(changes.enabled_sites?.oldValue)
+      ? changes.enabled_sites.oldValue
+      : [];
+    const nextSites = Array.isArray(changes.enabled_sites?.newValue)
+      ? changes.enabled_sites.newValue
+      : [];
+    const addedSites = nextSites.filter((site) => !previousSites.includes(site));
+
+    // Removals only need a re-register for future loads; additions also deserve
+    // a pause in the tabs that are already open.
+    void scheduleInterceptorSync({
+      inject: justEnabled || addedSites.length > 0,
+      domains: justEnabled ? null : addedSites
+    });
   }
 });
 
 chrome.permissions.onAdded.addListener(() => {
-  void scheduleInterceptorSync();
+  void scheduleInterceptorSync({ inject: true });
 });
 
 chrome.permissions.onRemoved.addListener(() => {
@@ -99,9 +160,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message?.type !== "getCopy") return;
-  if (message.language !== "bn" && message.language !== "en") return;
 
-  fetch(chrome.runtime.getURL(`content/${message.language}.json`))
+  // Always answer, even for a damaged stored value, so the page is never left waiting.
+  const language = message.language === "en" ? "en" : "bn";
+
+  fetch(chrome.runtime.getURL(`content/${language}.json`))
     .then((response) => response.json())
     .then(sendResponse)
     .catch((error) => {
