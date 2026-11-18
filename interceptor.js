@@ -35,7 +35,7 @@
   let audioContext = null;
   const VENT_HITS_TO_COMPLETE = 30;
   const VENT_ROUNDS_PER_DAY = 20;
-  const RAGE_FULL_WORDS = 30; // words to fill the rage bar
+  const STUDY_FULL_WORDS = 40; // words that fill the quiet progress line
 
   function revealPage() {
     if (host) {
@@ -373,531 +373,450 @@
         .toast-mode .actions { justify-content: flex-end; }
         .toast-mode button { min-height: 40px; padding: 9px 14px; font-size: 14px; }
 
-        /* ── Rage bar ───────────────────────────────────────── */
-        .vent-rage-bar-wrap {
-          width: 100%;
-          height: 6px;
-          border-radius: 100px;
-          background: rgb(0 0 0 / 6%);
-          margin-bottom: 10px;
-          overflow: hidden;
+        /* ── The Study: vent writing room ───────────────────── */
+        .screen.vent-room {
+          --paper: #f3ede0;
+          --paper-deep: #e7dcc7;
+          --ink: #1c2a23;
+          --muted: #6f776d;
+          --copper: #a9633c;
+          --line: rgb(92 74 48 / 18%);
+          --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
           position: relative;
+          background:
+            radial-gradient(ellipse at 50% -12%, rgb(255 250 235 / 96%), transparent 56%),
+            var(--grain),
+            linear-gradient(158deg, #f7f1e4 0%, #f0e7d5 56%, #e9ddc8 100%);
+          background-size: auto, 160px 160px, auto;
+          color: var(--ink);
         }
-        .vent-rage-bar {
+        .screen.vent-room::after {
+          content: "";
+          position: fixed;
+          inset: 0;
+          z-index: 0;
+          pointer-events: none;
+          background: radial-gradient(ellipse at 50% 38%, transparent 44%, rgb(80 60 35 / 14%) 100%);
+        }
+        .screen.vent-entry {
+          --ink: #284b39;
+          --muted: #587461;
+          --copper: #46765a;
+          --line: rgb(70 118 90 / 18%);
+        }
+        .screen.vent-entry .panel {
+          width: min(680px, 100%);
+          text-align: left;
+        }
+        .screen.vent-entry .vent-study::before {
+          background: radial-gradient(ellipse at 50% 0%, rgb(255 255 255 / 92%), transparent 68%);
+        }
+        .vent-entry .study-index { color: rgb(40 75 57 / 55%); }
+        .vent-entry .study-title em { color: #46765a; }
+        .vent-entry .study-choice:hover,
+        .vent-entry .study-choice:active { background: rgb(70 118 90 / 7%); }
+
+        .screen.vent-room .panel {
           position: relative;
-          overflow: hidden;
-          height: 100%;
-          border-radius: 100px;
-          width: 0%;
-          transition: width 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.6s ease;
-          background: #6bbf80;
-          transform-origin: left;
+          z-index: 1;
+          width: min(680px, 100%);
+          text-align: left;
         }
-        .vent-rage-bar.rage-low    { background: #6bbf80; }
-        .vent-rage-bar.rage-mid    { background: #f0a040; }
-        .vent-rage-bar.rage-high   { background: #e0531e; }
-        .vent-rage-bar.rage-full   {
-          background: linear-gradient(90deg, #e05010, #ff7a00, #ff3d00);
-          animation: rage-bar-pulse 0.8s ease-in-out infinite alternate;
+        .vent-room .panel > h1,
+        .study-title {
+          font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Noto Serif Bengali", "Vrinda", Georgia, serif;
+          font-weight: 400;
+          letter-spacing: -0.02em;
+          color: var(--ink);
         }
-        .vent-rage-bar.rage-full::after {
+        .vent-room .panel > h1 {
+          margin: 0 0 14px;
+          font-size: clamp(34px, 5.5vw, 48px);
+          line-height: 1.06;
+        }
+        .vent-room .panel > p {
+          max-width: 46ch;
+          margin: 0 0 26px;
+          color: var(--muted);
+          font-size: 14px;
+        }
+        .vent-room .actions { justify-content: flex-start; gap: 14px; }
+        .vent-room .actions button {
+          min-height: 44px;
+          border-radius: 2px;
+          padding: 10px 18px;
+          font-size: 12px;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+        }
+        .vent-room .actions .primary {
+          background: var(--ink);
+          color: #f7f1e4;
+          box-shadow: none;
+        }
+        .vent-room .actions .secondary {
+          border: 1px solid var(--line);
+          background: transparent;
+          color: var(--muted);
+          box-shadow: none;
+        }
+        .vent-room button:focus-visible { outline-color: var(--copper); }
+
+        .vent-study {
+          position: relative;
+          isolation: isolate;
+          animation: study-enter 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        @keyframes study-enter {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .vent-study::before {
           content: "";
           position: absolute;
-          inset: 0 auto 0 0;
-          width: 34%;
-          background: linear-gradient(105deg, transparent, rgb(255 245 195 / 90%), transparent);
-          transform: translateX(-140%) skewX(-18deg);
-          animation: rage-bar-shimmer 1.5s ease-in-out infinite;
+          z-index: 0;
+          inset: -22% -12% auto;
+          height: 74%;
+          background: radial-gradient(ellipse at 50% 0%, rgb(255 246 222 / 92%), transparent 68%);
+          filter: blur(18px);
+          opacity: 0.55;
+          pointer-events: none;
+          animation: study-lamp 14s ease-in-out infinite;
         }
-        @keyframes rage-bar-shimmer {
-          to { transform: translateX(420%) skewX(-18deg); }
+        @keyframes study-lamp {
+          0%, 100% { opacity: 0.45; transform: scale(1); }
+          50% { opacity: 0.65; transform: scale(1.03); }
         }
-        @keyframes rage-bar-pulse {
-          0%   { opacity: 0.85; }
-          100% { opacity: 1; box-shadow: 0 0 10px rgb(240 80 20 / 60%); }
+        .vent-study > * { position: relative; z-index: 1; }
+
+        .study-head {
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: 20px;
+          margin-bottom: 30px;
+          padding-bottom: 12px;
+          border-bottom: 1px solid var(--line);
         }
-        .vent-rage-ember {
+        .study-eyebrow {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          color: var(--copper);
+          font: 600 10px/1 system-ui, sans-serif;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+        }
+        .study-eyebrow::before {
+          content: "";
+          width: 26px;
+          height: 1px;
+          background: currentColor;
+          opacity: 0.6;
+        }
+        .study-index {
+          color: rgb(90 75 55 / 55%);
+          font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+          font-size: 12px;
+          letter-spacing: 0.12em;
+        }
+
+        .study-title {
+          max-width: 18ch;
+          margin: 0 0 16px;
+          font-size: clamp(38px, 6vw, 56px);
+          line-height: 1.02;
+        }
+        .study-title em {
+          color: #8a4f30;
+          font-style: italic;
+        }
+        .study-title:lang(bn) em { font-style: normal; }
+        .study-note {
+          max-width: 46ch;
+          margin: 0 0 24px;
+          color: var(--muted);
+          font-size: 14px;
+          line-height: 1.6;
+        }
+        .vent-room .study-note { color: var(--muted); }
+
+        /* Choice rows */
+        .study-choices { border-top: 1px solid var(--line); }
+        .study-choice {
+          display: grid;
+          grid-template-columns: 38px 1fr 24px;
+          gap: 16px;
+          align-items: center;
+          width: 100%;
+          min-height: 0;
+          padding: 22px 4px;
+          border: 0;
+          border-bottom: 1px solid var(--line);
+          border-radius: 0;
+          background: transparent;
+          color: inherit;
+          text-align: left;
+          cursor: pointer;
+          transition: background 260ms ease, padding-left 260ms ease;
+        }
+        .study-choice:hover,
+        .study-choice:active {
+          padding-left: 12px;
+          background: rgb(169 99 60 / 6%);
+        }
+        .study-choice-num {
+          color: var(--copper);
+          font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+          font-size: 13px;
+          letter-spacing: 0.08em;
+        }
+        .study-choice-body { display: flex; flex-direction: column; gap: 4px; }
+        .study-choice-body strong {
+          font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Noto Serif Bengali", "Vrinda", Georgia, serif;
+          font-size: 24px;
+          font-weight: 400;
+          letter-spacing: -0.01em;
+        }
+        .study-choice-hint {
+          color: var(--muted);
+          font-size: 13px;
+          line-height: 1.45;
+        }
+        .study-choice-arrow {
+          color: var(--copper);
+          font-size: 20px;
+          transition: transform 260ms ease;
+        }
+        .study-choice:hover .study-choice-arrow { transform: translateX(5px); }
+
+        .study-link {
+          position: relative;
+          display: inline-block;
+          margin-top: 26px;
+          min-height: 0;
+          padding: 0 0 2px;
+          border: 0;
+          border-bottom: 1px solid transparent;
+          border-radius: 0;
+          background: none;
+          color: var(--muted);
+          font: inherit;
+          font-size: 13px;
+          cursor: pointer;
+        }
+        .study-link::after,
+        .study-burn::after {
+          content: "";
           position: absolute;
-          right: 2px;
-          top: 50%;
-          transform: translateY(-50%);
-          font-size: 10px;
-          line-height: 1;
-          opacity: 0;
-          transition: opacity 0.3s;
+          inset: -10px -8px;
+        }
+        .study-link:hover {
+          color: var(--ink);
+          border-bottom-color: currentColor;
+        }
+        .study-link:disabled {
+          opacity: 0.4;
+          cursor: default;
           pointer-events: none;
         }
-        .vent-rage-bar.rage-full ~ .vent-rage-ember { opacity: 1; }
-        .vent-rage-bar.rage-full ~ .vent-rage-ember { animation: rage-ember-pulse 1.1s ease-in-out infinite; }
-        @keyframes rage-ember-pulse {
-          0%, 100% { transform: translateY(-50%) scale(1); filter: drop-shadow(0 0 0 rgb(255 120 20 / 0%)); }
-          50% { transform: translateY(-50%) scale(1.28); filter: drop-shadow(0 0 5px rgb(255 120 20 / 75%)); }
-        }
 
-        /* ── Vent write frosted card wrapper ───────────────────────
-           Groups headline + subtext + rage bar + editor into a soft
-           glass-morphism card so the writing space feels anchored. */
-        .vent-write-card {
-          box-sizing: border-box;
-          width: 100%;
-          padding: clamp(20px, 5vw, 32px) clamp(18px, 5vw, 28px) 20px;
-          border: 1px solid rgb(255 255 255 / 72%);
-          border-radius: 24px;
-          background: rgb(255 255 255 / 60%);
-          backdrop-filter: blur(18px);
-          -webkit-backdrop-filter: blur(18px);
-          box-shadow: 0 16px 48px rgb(46 83 58 / 10%), inset 0 1px rgb(255 255 255 / 85%);
-          margin-bottom: 4px;
-          transition: box-shadow 0.4s ease;
-          animation: vent-card-enter 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-        }
-        @keyframes vent-card-enter {
-          from { opacity: 0; transform: translateY(12px) scale(0.975); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .vent-write-card h1 { font-size: clamp(22px, 4.5vw, 30px); margin-bottom: 8px; }
-        .vent-write-card > p  { margin-bottom: 14px; font-size: 14px; color: #6a8870; }
-
-        /* ── Vent write editor ──────────────────────────────────────────
-           Refined, frosted paper card matching the serene fresh green theme. */
-        .vent-editor {
+        /* Writing sheet */
+        .study-sheet {
           position: relative;
-          width: 100%;
-          margin: 8px auto 24px;
+          border: 1px solid rgb(120 95 60 / 22%);
+          border-radius: 4px;
+          background:
+            linear-gradient(180deg, rgb(255 255 255 / 72%), rgb(255 252 244 / 28%)),
+            #faf5ea;
+          box-shadow:
+            inset 0 1px 0 rgb(255 255 255 / 88%),
+            0 26px 50px -30px rgb(64 48 28 / 42%),
+            0 2px 6px rgb(64 48 28 / 7%);
+          overflow: hidden;
+          transition: border-color 240ms ease, box-shadow 240ms ease;
         }
-
-        /* Progressive rage warmth — card background shifts with word count */
-        .vent-editor.rage-0  { --rage-tint: rgb(255 255 255 / 82%); --rage-glow: rgb(55 104 69 / 7%); }
-        .vent-editor.rage-1  { --rage-tint: rgb(255 253 248 / 85%); --rage-glow: rgb(220 130 50 / 10%); }
-        .vent-editor.rage-2  { --rage-tint: rgb(255 248 235 / 87%); --rage-glow: rgb(230 110 40 / 15%); }
-        .vent-editor.rage-3  { --rage-tint: rgb(255 240 215 / 90%); --rage-glow: rgb(230 85 30 / 20%); }
-        .vent-editor.rage-4  { --rage-tint: rgb(255 228 195 / 90%); --rage-glow: rgb(220 60 20 / 25%); }
-        .vent-editor.rage-5  { --rage-tint: rgb(255 215 170 / 92%); --rage-glow: rgb(210 40 10 / 30%); }
-
-        /* Panel shake on punctuation */
-        @keyframes panel-shake-hard {
-          0%,100% { transform: translate(0,0) rotate(0deg); }
-          15% { transform: translate(-5px,2px) rotate(-0.4deg); }
-          30% { transform: translate(5px,-2px) rotate(0.3deg); }
-          45% { transform: translate(-4px,1px) rotate(-0.2deg); }
-          60% { transform: translate(3px,-1px) rotate(0.15deg); }
-          75% { transform: translate(-2px,1px) rotate(-0.1deg); }
+        .study-sheet:focus-within {
+          border-color: rgb(169 99 60 / 42%);
+          box-shadow:
+            inset 0 1px 0 rgb(255 255 255 / 88%),
+            0 28px 56px -30px rgb(64 48 28 / 46%),
+            0 0 0 3px rgb(169 99 60 / 10%);
         }
-        @keyframes panel-shake-mid {
-          0%,100% { transform: translate(0,0); }
-          20% { transform: translate(-3px,1px); }
-          40% { transform: translate(3px,-1px); }
-          60% { transform: translate(-2px,0px); }
-          80% { transform: translate(1px,0px); }
+        .study-sheet.burning {
+          border-color: rgb(169 99 60 / 50%);
+          box-shadow:
+            inset 0 1px 0 rgb(255 255 255 / 80%),
+            0 30px 60px -30px rgb(120 60 25 / 42%),
+            0 0 0 3px rgb(169 99 60 / 12%);
         }
-        @keyframes panel-shake-light {
-          0%,100% { transform: translate(0,0); }
-          30% { transform: translate(-1.5px,0.5px); }
-          70% { transform: translate(1.5px,-0.5px); }
+        .study-sheet::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: 0;
+          background-image: var(--grain);
+          background-size: 160px 160px;
+          opacity: 0.55;
+          pointer-events: none;
         }
-        .panel.shake-hard  { animation: panel-shake-hard  350ms cubic-bezier(0.3,0,0.7,1) forwards; }
-        .panel.shake-mid   { animation: panel-shake-mid   280ms cubic-bezier(0.3,0,0.7,1) forwards; }
-        .panel.shake-light { animation: panel-shake-light 200ms cubic-bezier(0.3,0,0.7,1) forwards; }
-
-        /* Shared typography & geometry for pixel-perfect word alignment */
         .vent-words,
         .vent-textarea {
           box-sizing: border-box;
           width: 100%;
-          min-height: 155px;
-          padding: 18px 20px;
+          min-height: clamp(190px, 30vh, 260px);
+          padding: 26px 28px;
           margin: 0;
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          font-size: 16px;
+          border: 0;
+          border-radius: 0;
+          font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Noto Serif Bengali", "Vrinda", Georgia, serif;
+          font-size: 18px;
           font-weight: 400;
-          line-height: 1.65;
+          line-height: 1.7;
           letter-spacing: normal;
           word-spacing: normal;
-          text-transform: none;
-          text-indent: 0;
-          white-space: pre-wrap;
-          word-wrap: break-word;
-          overflow-wrap: break-word;
-          border-radius: 20px;
           text-align: left;
+          white-space: pre-wrap;
+          overflow-wrap: break-word;
           -webkit-font-smoothing: antialiased;
           text-rendering: optimizeLegibility;
         }
-
-        /* Frosted paper card layer directly beneath textarea */
         .vent-words {
           position: absolute;
           inset: 0;
           z-index: 1;
-          border: 1.5px solid rgb(66 119 79 / 18%);
-          background: var(--rage-tint, rgb(255 255 255 / 82%));
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
           overflow-y: hidden;
           overflow-x: hidden;
           pointer-events: none;
-          color: #1e382b;
-          box-shadow: 0 10px 30px var(--rage-glow, rgb(55 104 69 / 7%)), inset 0 1px 2px rgb(255 255 255 / 80%);
-          transition: background 0.6s ease, box-shadow 0.6s ease, border-color 0.25s ease;
+          color: var(--ink);
         }
-        .vent-editor.idle-breathing {
-          animation: vent-idle-breathe 4.2s ease-in-out infinite;
-        }
-        @keyframes vent-idle-breathe {
-          0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-2px) scale(1.006); }
-        }
-        .vent-editor.rage-active:not(:focus-within) .vent-words {
-          animation: rage-glow-heartbeat var(--rage-beat-duration, 4.2s) ease-in-out infinite;
-        }
-        @keyframes rage-glow-heartbeat {
-          0%, 100% { box-shadow: 0 10px 30px var(--rage-glow, rgb(55 104 69 / 7%)), inset 0 1px 2px rgb(255 255 255 / 80%); }
-          45% { box-shadow: 0 12px 34px var(--rage-glow, rgb(55 104 69 / 7%)), 0 0 13px var(--rage-glow, rgb(55 104 69 / 7%)), inset 0 1px 2px rgb(255 255 255 / 80%); }
-          58% { box-shadow: 0 10px 30px var(--rage-glow, rgb(55 104 69 / 7%)), inset 0 1px 2px rgb(255 255 255 / 80%); }
-        }
-        .vent-editor.rage-active:focus-within .vent-words { animation: none; }
-        .vent-words::before,
-        .vent-words::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          z-index: 3;
-          pointer-events: none;
-          opacity: 0;
-        }
-        .vent-editor.rage-ready .vent-words::before {
-          inset: -18% 8% auto;
-          height: 72%;
-          background:
-            radial-gradient(ellipse at 22% 85%, rgb(95 91 82 / 24%), transparent 42%),
-            radial-gradient(ellipse at 72% 92%, rgb(125 103 78 / 19%), transparent 45%);
-          filter: blur(8px);
-          opacity: 0.4;
-          animation: rage-smoke-rise 2.8s ease-in-out infinite alternate;
-        }
-        @keyframes rage-smoke-rise {
-          from { transform: translateY(8px) scaleX(0.92); opacity: 0.18; }
-          to { transform: translateY(-10px) scaleX(1.08); opacity: 0.5; }
-        }
-        .vent-editor.rage-ready:not(:focus-within) { animation: preburn-tremor 2.6s steps(2, end) infinite; }
-        @keyframes preburn-tremor {
-          0%, 92%, 100% { transform: translate(0, 0); }
-          93% { transform: translate(-0.6px, 0.3px); }
-          95% { transform: translate(0.7px, -0.4px); }
-          97% { transform: translate(-0.4px, 0); }
-        }
-        .vent-editor.burning .vent-words::after {
-          inset: -35% -65%;
-          opacity: 1;
-          background: linear-gradient(112deg, transparent 38%, rgb(255 105 24 / 8%) 43%, rgb(255 184 67 / 85%) 49%, rgb(255 242 185 / 96%) 51%, rgb(255 93 24 / 75%) 54%, transparent 61%);
-          filter: blur(2px);
-          transform: translateX(-115%) rotate(-5deg);
-          animation: flame-front-sweep 850ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
-        }
-        @keyframes flame-front-sweep {
-          to { transform: translateX(115%) rotate(-5deg); }
-        }
-
-        /* Focus glow shines through on the card — warm ember ring */
-        .vent-editor:focus-within .vent-words {
-          border-color: rgb(210 100 40 / 55%);
-          box-shadow: 0 14px 36px rgb(55 104 69 / 14%), 0 0 0 3px rgb(215 95 35 / 22%), 0 0 18px rgb(230 110 40 / 14%);
-          transition: border-color 0.25s ease, box-shadow 0.35s ease;
-        }
-
-        /* Native interactive textarea on top */
         .vent-textarea {
           position: relative;
           z-index: 2;
           display: block;
-          border: 1.5px solid transparent;
           background: transparent;
           color: transparent;
-          caret-color: #d85a1e;
+          caret-color: var(--copper);
           resize: none;
           outline: none;
           overflow-y: auto;
           scrollbar-width: none;
           -ms-overflow-style: none;
         }
-        .vent-textarea::-webkit-scrollbar {
-          display: none;
-        }
+        .vent-textarea::-webkit-scrollbar { display: none; }
         .vent-textarea::placeholder {
-          color: #8aa393;
+          color: #9a9c90;
+          font-style: italic;
         }
         .vent-textarea::selection {
-          background: rgb(216 90 30 / 22%);
+          background: rgb(169 99 60 / 22%);
           color: transparent;
         }
-
-        /* ── Individual words: Living warm embers ──────────────
-           Must remain display: inline and font-weight: inherit so
-           letter widths match the native textarea cursor with 0px drift. */
-        .vent-word {
-          display: inline;
-          position: relative;
-          font-weight: inherit;
-          color: #1e382b;
-          text-shadow: 0 1px 3px rgb(215 85 25 / 15%);
-          transition: color 0.3s ease, text-shadow 0.3s ease;
-          animation: word-smolder 3.2s ease-in-out infinite;
-          animation-delay: var(--smolder-delay, 0ms);
-        }
-
-        /* Organic breathing ember warmth */
-        @keyframes word-smolder {
-          0%, 100% {
-            color: #1e382b;
-            text-shadow: 0 1px 3px rgb(215 85 25 / 15%);
-          }
-          50% {
-            color: #283a2d;
-            text-shadow: 0 1px 6px rgb(225 95 30 / 30%), 0 0 10px rgb(240 120 40 / 15%);
-          }
-        }
-
-        /* Typing effect: Word ignites as you type text by text! (Spacebar has zero effect)
-           Must remain display: inline with no scale/rotate so caret matches exactly with 0px drift */
-        .vent-word.active-typing {
-          display: inline;
-          color: #ff4500 !important;
-          text-shadow: 0 0 12px rgb(255 90 20 / 95%), 0 0 24px rgb(255 150 40 / 70%), 0 0 2px #fff !important;
-          animation: word-ignite 0.4s ease-out forwards;
-        }
-        @keyframes word-ignite {
-          0% {
-            color: #ff3700;
-            text-shadow: 0 0 16px rgb(255 100 20 / 95%), 0 0 30px rgb(255 170 40 / 80%), 0 0 3px #fff;
-          }
-          60% {
-            color: #e65100;
-            text-shadow: 0 0 10px rgb(235 90 25 / 65%), 0 0 18px rgb(255 140 40 / 40%);
-          }
-          100% {
-            color: #283a2d;
-            text-shadow: 0 1px 6px rgb(225 95 30 / 30%);
-          }
-        }
-
-        /* Tiny tactile spark on character keypress */
-        .vent-type-spark {
-          position: absolute;
-          width: 2.5px;
-          height: 2.5px;
-          border-radius: 50%;
-          background: var(--spark-color, #ff9436);
-          box-shadow: 0 0 6px var(--spark-color, rgb(255 130 40 / 90%));
+        .vent-word { display: inline; color: inherit; }
+        .study-sheet.burning .vent-textarea {
+          opacity: 0;
           pointer-events: none;
-          z-index: 6;
-          animation: type-spark-rise 420ms ease-out forwards;
+          transition: opacity 180ms ease;
         }
-        @keyframes type-spark-rise {
-          0% {
-            opacity: 0.9;
-            transform: translate(0, 0) scale(1);
-          }
-          100% {
-            opacity: 0;
-            transform: translate(var(--drift, 0px), -26px) scale(0.3);
-          }
+        .study-sheet.burning .vent-word {
+          display: inline-block;
+          animation: word-ash 720ms cubic-bezier(0.22, 1, 0.36, 1) var(--w-delay, 0ms) forwards;
+        }
+        @keyframes word-ash {
+          0% { opacity: 1; filter: blur(0); transform: translateY(0); color: var(--ink); }
+          35% { color: #a9633c; }
+          100% { opacity: 0; filter: blur(3px); transform: translateY(-12px); color: #7a6b58; }
+        }
+        .study-sheet.burning::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: 3;
+          pointer-events: none;
+          background: radial-gradient(ellipse at 50% 100%, rgb(190 95 45 / 22%), transparent 62%);
+          animation: study-scorch 1100ms ease-out forwards;
+        }
+        @keyframes study-scorch {
+          0% { opacity: 0; }
+          30% { opacity: 1; }
+          100% { opacity: 0; }
         }
 
-        /* Burn action button subtle warm hover */
-        .burn-btn {
-          background: #46765a;
-          color: #fff;
-          transition: background 0.4s ease, box-shadow 0.4s ease, transform 0.2s ease;
+        .study-progress {
+          height: 1px;
+          margin: 18px 0 14px;
+          background: rgb(92 74 48 / 16%);
+          overflow: hidden;
         }
-        .burn-btn:hover:not(:disabled) {
-          background: #ba5327;
-          box-shadow: 0 10px 26px rgb(186 83 39 / 28%);
-          transform: translateY(-1px);
+        .study-progress-fill {
+          display: block;
+          width: 0%;
+          height: 100%;
+          background: var(--copper);
+          transition: width 420ms cubic-bezier(0.22, 1, 0.36, 1);
         }
-        /* Warm ember glow when text is present but not yet rage-full */
-        .burn-btn.has-text:not(.rage-ready) {
-          background: linear-gradient(135deg, #5a7d6a, #7a6040);
-          box-shadow: 0 6px 18px rgb(140 80 30 / 20%);
-          animation: burn-btn-ember 2.4s ease-in-out infinite alternate;
+        .study-foot {
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: 20px;
         }
-        @keyframes burn-btn-ember {
-          0%   { box-shadow: 0 6px 18px rgb(140 80 30 / 18%); }
-          50%  { box-shadow: 0 8px 22px rgb(185 100 40 / 32%), 0 0 12px rgb(220 120 40 / 18%); }
-          100% { box-shadow: 0 6px 18px rgb(140 80 30 / 18%); }
+        .study-count {
+          color: #8a8b7f;
+          font: 600 10px/1 system-ui, sans-serif;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
         }
-        /* Satisfying press / click effect */
-        .burn-btn:active:not(:disabled) {
-          transform: scale(0.96) translateY(1px);
-          transition: transform 0.08s ease;
-          box-shadow: 0 2px 8px rgb(140 60 20 / 20%);
+        .study-burn {
+          position: relative;
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          min-height: 0;
+          padding: 4px 0 6px;
+          border: 0;
+          border-bottom: 1px solid currentColor;
+          border-radius: 0;
+          background: none;
+          color: var(--copper);
+          font: 600 12px/1 system-ui, sans-serif;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: color 200ms ease, gap 200ms ease;
         }
-        .burn-btn:disabled {
-          opacity: 0.7;
+        .study-burn:hover:not(:disabled) {
+          gap: 15px;
+          color: #7f4528;
+        }
+        .study-burn:disabled {
+          color: #b9b2a3;
           cursor: default;
         }
-        /* Fire pulse when rage bar is full */
-        .burn-btn.rage-ready {
-          background: linear-gradient(135deg, #c94b1a, #e06b10, #ff4500);
-          background-size: 200% 200%;
-          animation: burn-btn-fire 1.1s ease-in-out infinite alternate;
-          box-shadow: 0 0 20px rgb(230 80 20 / 50%);
-        }
-        @keyframes burn-btn-fire {
-          0%   { background-position: 0% 50%;   box-shadow: 0 0 16px rgb(230 80 20 / 45%); transform: scale(1); }
-          50%  { background-position: 100% 50%; box-shadow: 0 0 28px rgb(255 100 20 / 65%); transform: scale(1.025); }
-          100% { background-position: 0% 50%;   box-shadow: 0 0 20px rgb(230 60 10 / 50%); transform: scale(1); }
-        }
+        .study-burn-arrow { font-size: 16px; }
+        .study-back { margin-top: 22px; }
 
-        /* Full-card orange flash before incineration */
-        @keyframes card-flash {
-          0%   { filter: brightness(1) saturate(1); }
-          30%  { filter: brightness(1.3) saturate(1.5) hue-rotate(-20deg); }
-          100% { filter: brightness(1) saturate(1); }
+        /* Burned screen */
+        .vent-burned-room {
+          padding: clamp(30px, 7vh, 70px) 0;
+          text-align: center;
         }
-        .vent-editor.flash-orange .vent-words {
-          animation: card-flash 350ms ease-out forwards;
-        }
-
-        /* Disintegration / Incineration animation: Every word turns to ash */
-        .vent-editor.burning .vent-textarea {
-          opacity: 0;
-          pointer-events: none;
-          transition: opacity 200ms ease;
-        }
-        .vent-editor.burning .vent-words {
-          animation: card-incinerate 1050ms cubic-bezier(0.25, 1, 0.5, 1) forwards;
-        }
-        @keyframes card-incinerate {
-          0% {
-            transform: translateY(0) scale(1);
-            opacity: 1;
-            filter: blur(0);
-          }
-          40% {
-            border-color: rgb(220 90 30 / 40%);
-            box-shadow: 0 14px 40px rgb(220 90 30 / 18%);
-          }
-          100% {
-            transform: translateY(-28px) scale(0.95);
-            opacity: 0;
-            filter: blur(6px);
-          }
-        }
-
-        .vent-editor.burning .vent-word {
-          display: inline-block;
-          animation: word-ash-burn 0.85s cubic-bezier(0.2, 0.8, 0.3, 1) var(--w-delay, 0ms) forwards;
-        }
-        @keyframes word-ash-burn {
-          0% {
-            transform: translateY(0) scale(1) rotate(0deg);
-            color: #1e382b;
-          }
-          25% {
-            transform: translateY(-6px) scale(1.1) rotate(var(--burn-spin, 2deg));
-            color: #f06a24;
-            text-shadow: 0 0 14px rgb(255 120 40 / 85%), 0 0 28px rgb(255 160 50 / 50%);
-            filter: blur(0.5px);
-          }
-          60% {
-            transform: translateY(-25px) scale(0.95) rotate(var(--burn-spin2, -4deg));
-            color: #9c8e82;
-            text-shadow: 0 0 8px rgb(180 140 100 / 30%);
-            filter: blur(2px);
-            opacity: 0.6;
-          }
-          100% {
-            transform: translateY(var(--burn-vy, -55px)) translateX(var(--burn-vx, 0px)) scale(0.6);
-            color: #6e655d;
-            filter: blur(5px);
-            opacity: 0;
-          }
-        }
-
-        /* Floating embers & ash flakes */
-        .vent-ember-spark {
-          position: absolute;
-          left: var(--sx);
-          top: var(--sy);
-          width: 3px;
-          height: 3px;
+        .vent-burned-room .study-title::before {
+          content: "";
+          display: block;
+          width: 6px;
+          height: 6px;
+          margin: 0 auto 26px;
           border-radius: 50%;
-          background: radial-gradient(circle, #fff7d6 0%, #ff9e3b 60%, #ff5214 100%);
-          box-shadow: 0 0 8px rgb(255 120 40 / 80%);
-          pointer-events: none;
-          z-index: 5;
-          opacity: 0;
-          animation: spark-drift var(--dur) cubic-bezier(0.16, 1, 0.3, 1) var(--delay) forwards;
+          background: var(--copper);
         }
-        .vent-ash-flake {
-          position: absolute;
-          left: var(--sx);
-          top: var(--sy);
-          width: 4px;
-          height: 4px;
-          border-radius: 35%;
-          background: #756e65;
-          pointer-events: none;
-          z-index: 4;
-          opacity: 0;
-          animation: ash-drift var(--dur) ease-out var(--delay) forwards;
+        .vent-burned-room .study-title {
+          max-width: none;
+          margin: 0 0 12px;
+          font-size: clamp(44px, 8vw, 70px);
         }
-        .vent-ember-spark, .vent-ash-flake {
-          width: var(--particle-size, 3px);
-          height: var(--particle-size, 3px);
-          filter: blur(var(--particle-blur, 0px));
-        }
-        @keyframes spark-drift {
-          0% {
-            opacity: 0;
-            transform: translate(0, 0) scale(0.5);
-          }
-          20% {
-            opacity: 1;
-            transform: translate(calc(var(--dx) * 0.25), calc(var(--dy) * 0.25)) scale(1.4);
-          }
-          100% {
-            opacity: 0;
-            transform: translate(var(--dx), var(--dy)) scale(0.2);
-          }
-        }
-        @keyframes ash-drift {
-          0% {
-            opacity: 0;
-            transform: translate(0, 0) scale(0.7) rotate(0deg);
-          }
-          25% {
-            opacity: 0.65;
-          }
-          100% {
-            opacity: 0;
-            transform: translate(var(--dx), var(--dy)) scale(0.35) rotate(160deg);
-          }
-        }
-
-        .panel.vent-burned { animation: vent-ash-settle 900ms ease-out both; }
-        .panel.vent-burned h1 { color: #426b52; transition: color 1.2s ease; }
-        @keyframes vent-ash-settle {
-          from { opacity: 0.25; transform: translateY(-5px) scale(0.985); filter: saturate(0.55); }
-          to { opacity: 1; transform: translateY(0) scale(1); filter: saturate(1); }
-        }
-        .cooling-ash {
-          position: absolute;
-          left: var(--ash-x);
-          top: -10px;
-          width: var(--ash-size, 4px);
-          height: var(--ash-size, 4px);
-          border-radius: 50%;
-          background: rgb(128 119 103 / 55%);
-          pointer-events: none;
-          animation: cooling-ash-settle var(--ash-duration, 1.8s) ease-out var(--ash-delay, 0ms) forwards;
-        }
-        @keyframes cooling-ash-settle {
-          0% { opacity: 0; transform: translateY(0) translateX(0) rotate(0); }
-          22% { opacity: 0.55; }
-          78% { opacity: 0.38; }
-          100% { opacity: 0.08; transform: translateY(var(--ash-fall, 42px)) translateX(var(--ash-drift, 10px)) rotate(130deg); }
-        }
+        .vent-burned-room .study-note { margin: 0 auto 28px; }
+        .vent-burned-room .study-link { margin-top: 0; }
 
         /* ── Vent punch scene ───────────────────────────────── */
         .vent-scene {
@@ -1195,15 +1114,10 @@
             animation: none !important;
             transition: none !important;
           }
-          .vent-word, .vent-word.active-typing { animation: none; }
-          .vent-write-card, .vent-editor.idle-breathing,
-          .vent-editor.rage-active .vent-words, .vent-editor.rage-ready,
-          .vent-rage-bar.rage-full, .vent-rage-bar.rage-full::after,
-          .vent-rage-bar.rage-full ~ .vent-rage-ember, .vent-editor.rage-ready .vent-words::before,
-          .vent-editor.burning .vent-words::after, .panel.vent-burned, .cooling-ash,
-          .burn-btn.has-text:not(.rage-ready), .burn-btn.rage-ready { animation: none !important; }
-          .vent-editor.burning .vent-words, .vent-editor.burning .vent-word,
-          .vent-ember-spark, .vent-ash-flake, .vent-type-spark,
+          .vent-study { animation: none; }
+          .vent-study::before { animation: none; opacity: 0.5; }
+          .study-sheet.burning .vent-word { animation-duration: 1ms; animation-iteration-count: 1; }
+          .study-sheet.burning::after { animation: none; opacity: 0; }
           .vent-character.punching, .vent-character.kicking,
           .vent-character.punching .char-punch-arm, .vent-character.kicking .char-kick-leg,
           .vent-bag.hit, .vent-bag.kick, .vent-bag-wrap.swinging,
@@ -1227,8 +1141,6 @@
   function makePanel(title, message = "") {
     const panel = shadow.querySelector(".panel");
     panel.classList.remove("greeting-panel");
-    panel.classList.remove("vent-burned");
-    shadow.querySelector(".screen")?.classList.remove("vent-cooling");
     panel.replaceChildren();
 
     const heading = document.createElement("h1");
@@ -1509,60 +1421,108 @@
   }
 
   function showVentChoice() {
+    clearVentIdleTimer();
     view = "ventChoice";
     setFreshTheme(true);
-    const { panel, actions } = makePanel(copy.vent.promptTitle);
-    panel.classList.add("greeting-panel");
-    actions.classList.add("greeting-actions");
-    addButton(actions, copy.vent.writeDoor, "primary", startVentWrite);
-    addButton(actions, copy.vent.punchDoor, "primary", requestVentRound);
-    addButton(actions, copy.vent.backToWork, "secondary", () => void showGoodbye());
+    enterVentEntry();
+
+    const panel = shadow.querySelector(".panel");
+    panel.classList.remove("greeting-panel");
+    panel.replaceChildren();
+
+    const study = document.createElement("div");
+    study.className = "vent-study vent-choice";
+    study.lang = studyLang();
+
+    const head = document.createElement("header");
+    head.className = "study-head";
+    const eyebrow = document.createElement("span");
+    eyebrow.className = "study-eyebrow";
+    eyebrow.textContent = copy.vent.eyebrow;
+    const index = document.createElement("span");
+    index.className = "study-index";
+    index.setAttribute("aria-hidden", "true");
+    index.textContent = "01";
+    head.append(eyebrow, index);
+
+    const title = document.createElement("h1");
+    title.className = "study-title";
+    title.textContent = copy.vent.promptTitle;
+
+    const note = document.createElement("p");
+    note.className = "study-note";
+    note.textContent = copy.vent.choiceNote;
+
+    const choices = document.createElement("div");
+    choices.className = "study-choices";
+    choices.append(
+      makeStudyChoice("01", copy.vent.writeDoor, copy.vent.writeDoorHint, startVentWrite),
+      makeStudyChoice("02", copy.vent.punchDoor, copy.vent.punchDoorHint, requestVentRound)
+    );
+
+    const back = document.createElement("button");
+    back.type = "button";
+    back.className = "study-link";
+    back.textContent = copy.vent.studyBackToWork;
+    back.addEventListener("click", () => {
+      ventDraft = "";
+      void showGoodbye();
+    });
+
+    study.append(head, title, note, choices, back);
+    panel.append(study);
+  }
+
+  function makeStudyChoice(number, title, hint, onClick) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "study-choice";
+
+    const num = document.createElement("span");
+    num.className = "study-choice-num";
+    num.setAttribute("aria-hidden", "true");
+    num.textContent = number;
+
+    const body = document.createElement("span");
+    body.className = "study-choice-body";
+    const strong = document.createElement("strong");
+    strong.textContent = title;
+    const small = document.createElement("span");
+    small.className = "study-choice-hint";
+    small.textContent = hint;
+    body.append(strong, small);
+
+    const arrow = document.createElement("span");
+    arrow.className = "study-choice-arrow";
+    arrow.textContent = "→";
+    arrow.setAttribute("aria-hidden", "true");
+
+    button.append(num, body, arrow);
+    button.addEventListener("click", onClick);
+    return button;
   }
 
   function startVentWrite() {
-    ventDraft = "";
     showVentWrite();
   }
 
-  function updateVentWords(mirror, text, isSpaceOnly) {
+  function updateVentWords(mirror, text) {
     mirror.replaceChildren();
     if (!text) return 0;
 
     const tokens = text.split(/(\s+)/);
     let wordCount = 0;
 
-    for (let i = 0; i < tokens.length; i += 1) {
-      const token = tokens[i];
+    for (const token of tokens) {
       if (!token) continue;
 
       if (/^\s+$/.test(token)) {
-        // Spacebar, newlines, tabs: zero effect! Plain text spacer.
         mirror.appendChild(document.createTextNode(token));
       } else {
         wordCount += 1;
         const span = document.createElement("span");
         span.className = "vent-word";
         span.textContent = token;
-        span.style.setProperty("--smolder-delay", `${(wordCount * 180) % 1200}ms`);
-        // Slight random tilt per word for scrawled-anger look
-        const tilt = ((wordCount % 2 === 0 ? 1 : -1) * (0.5 + Math.random() * 1.5)).toFixed(2);
-        span.style.setProperty("--word-tilt", `${tilt}deg`);
-        // Random burn direction for scatter effect
-        const burnVx = Math.round((Math.random() - 0.5) * 60);
-        const burnVy = -(35 + Math.round(Math.random() * 40));
-        const burnSpin = ((Math.random() - 0.5) * 10).toFixed(1);
-        const burnSpin2 = ((Math.random() - 0.5) * 18).toFixed(1);
-        span.style.setProperty("--burn-vx", `${burnVx}px`);
-        span.style.setProperty("--burn-vy", `${burnVy}px`);
-        span.style.setProperty("--burn-spin", `${burnSpin}deg`);
-        span.style.setProperty("--burn-spin2", `${burnSpin2}deg`);
-
-        // If the user just typed into this word (not spacebar), ignite it with the typing flare
-        const isLastWord = (i === tokens.length - 1 || (i === tokens.length - 2 && tokens[tokens.length - 1] === ""));
-        if (isLastWord && !isSpaceOnly) {
-          span.classList.add("active-typing");
-        }
-
         mirror.appendChild(span);
       }
     }
@@ -1570,119 +1530,74 @@
     return wordCount;
   }
 
-  function spawnTypingSpark(editor, count = 1) {
-    if (!editor) return;
-    for (let i = 0; i < count; i += 1) {
-      const spark = document.createElement("span");
-      spark.className = "vent-type-spark";
-      spark.setAttribute("aria-hidden", "true");
-      const x = 20 + Math.random() * 60;
-      spark.style.left = `${x}%`;
-      spark.style.bottom = `${18 + Math.random() * 14}px`;
-      spark.style.setProperty("--drift", `${(Math.random() - 0.5) * 36}px`);
-      editor.append(spark);
-      setTimeout(() => spark.remove(), 450);
-    }
-  }
-
-  function playTypeSoundSoft(wordCount) {
-    const context = prepareAudio();
-    if (!context) return;
-    try {
-      const now = context.currentTime;
-      // Subtle tick — pitch rises slightly with rage level to give audio progression
-      const baseFreq = 420 + Math.min(wordCount, RAGE_FULL_WORDS) * 6;
-      const osc = context.createOscillator();
-      const gain = context.createGain();
-      osc.type = "triangle";
-      osc.frequency.setValueAtTime(baseFreq, now);
-      osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.7, now + 0.055);
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.045, now + 0.004);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.055);
-      osc.connect(gain);
-      gain.connect(context.destination);
-      osc.start(now);
-      osc.stop(now + 0.06);
-    } catch (_) { /* silent */ }
-  }
-
-  function updateRageUI(editor, rageBar, burnButton, wordCount) {
-    if (!rageBar || !editor || !burnButton) return;
+  function updateStudyUI(progressFill, countEl, burnButton, wordCount) {
     const safeWordCount = Number.isFinite(wordCount) ? Math.max(0, wordCount) : 0;
-    const pct = Math.min(safeWordCount / RAGE_FULL_WORDS, 1);
-    const beatDuration = 4.2 - pct * 3;
-    const sparkHue = Math.round(44 - pct * 36);
-    editor.style.setProperty("--rage-beat-duration", `${beatDuration.toFixed(2)}s`);
-    editor.style.setProperty("--spark-color", `hsl(${sparkHue} 100% 58%)`);
-    if (safeWordCount > 0) editor.classList.remove("idle-breathing");
-    rageBar.style.width = `${Math.round(pct * 100)}%`;
-
-    // Remove all rage classes first
-    rageBar.classList.remove("rage-low", "rage-mid", "rage-high", "rage-full");
-    editor.classList.remove("rage-0", "rage-1", "rage-2", "rage-3", "rage-4", "rage-5", "rage-active", "rage-ready");
-    burnButton.classList.remove("rage-ready");
-
-    if (pct <= 0) {
-      rageBar.classList.add("rage-low");
-      editor.classList.add("rage-0");
-    } else if (pct < 0.25) {
-      rageBar.classList.add("rage-low");
-      editor.classList.add("rage-1", "rage-active");
-    } else if (pct < 0.5) {
-      rageBar.classList.add("rage-mid");
-      editor.classList.add("rage-2", "rage-active");
-    } else if (pct < 0.75) {
-      rageBar.classList.add("rage-high");
-      editor.classList.add("rage-3", "rage-active");
-    } else if (pct < 1) {
-      rageBar.classList.add("rage-high");
-      editor.classList.add("rage-4", "rage-active");
-    } else {
-      rageBar.classList.add("rage-full");
-      editor.classList.add("rage-5", "rage-active", "rage-ready");
-      burnButton.classList.add("rage-ready");
+    const pct = Math.min(safeWordCount / STUDY_FULL_WORDS, 1);
+    if (progressFill) progressFill.style.width = `${Math.round(pct * 100)}%`;
+    if (countEl) {
+      const unit = safeWordCount === 1
+        ? (copy.vent.wordUnitOne || copy.vent.wordUnit)
+        : copy.vent.wordUnit;
+      countEl.textContent = safeWordCount > 0
+        ? `${formatStudyNumber(safeWordCount)} ${unit}`
+        : "";
     }
+    if (burnButton) burnButton.disabled = safeWordCount === 0;
   }
 
-  function shakePanel(strength) {
-    const panel = shadow?.querySelector?.(".panel");
-    if (!panel) return;
-    panel.classList.remove("shake-hard", "shake-mid", "shake-light");
-    void panel.offsetWidth; // force reflow to restart animation
-    if (strength === "hard")       panel.classList.add("shake-hard");
-    else if (strength === "mid")   panel.classList.add("shake-mid");
-    else                           panel.classList.add("shake-light");
-    setTimeout(() => panel.classList.remove("shake-hard", "shake-mid", "shake-light"), 400);
+  function studyLang() {
+    return settings?.language === "bn" ? "bn" : "en";
+  }
+
+  function formatStudyNumber(value) {
+    const locale = studyLang() === "bn" ? "bn-BD" : "en-US";
+    try {
+      return new Intl.NumberFormat(locale, { useGrouping: false }).format(value);
+    } catch (_) {
+      return String(value);
+    }
   }
 
   function showVentWrite() {
+    clearVentIdleTimer();
     view = "ventWrite";
     setFreshTheme(true);
-    const { panel, actions } = makePanel(copy.vent.writeTitle, copy.vent.writeHint);
+    enterVentRoom();
 
-    // ── Frosted card: wraps heading + hint + rage bar + editor ──
-    const card = document.createElement("div");
-    card.className = "vent-write-card";
+    const panel = shadow.querySelector(".panel");
+    panel.classList.remove("greeting-panel");
+    panel.replaceChildren();
 
-    // Move the h1 and p that makePanel already added into the card
-    const existingH1 = panel.querySelector("h1");
-    const existingP  = panel.querySelector("p");
-    if (existingH1) card.appendChild(existingH1);
-    if (existingP)  card.appendChild(existingP);
+    const study = document.createElement("div");
+    study.className = "vent-study vent-write";
+    study.lang = studyLang();
 
-    const rageBarWrap = document.createElement("div");
-    rageBarWrap.className = "vent-rage-bar-wrap";
-    const rageBar = document.createElement("div");
-    rageBar.className = "vent-rage-bar";
-    const rageEmber = document.createElement("span");
-    rageEmber.className = "vent-rage-ember";
-    rageEmber.textContent = "🔥";
-    rageBarWrap.append(rageBar, rageEmber);
+    const head = document.createElement("header");
+    head.className = "study-head";
+    const eyebrow = document.createElement("span");
+    eyebrow.className = "study-eyebrow";
+    eyebrow.textContent = copy.vent.eyebrow;
+    const index = document.createElement("span");
+    index.className = "study-index";
+    index.setAttribute("aria-hidden", "true");
+    index.textContent = "02";
+    head.append(eyebrow, index);
 
-    const editor = document.createElement("div");
-    editor.className = "vent-editor";
-    if (!ventDraft.trim()) editor.classList.add("idle-breathing");
+    const title = document.createElement("h1");
+    title.className = "study-title";
+    title.append(document.createTextNode(copy.vent.writeTitle));
+    title.append(document.createElement("br"));
+    const accent = document.createElement("em");
+    accent.textContent = copy.vent.writeTitleAccent;
+    title.append(accent);
+
+    const note = document.createElement("p");
+    note.className = "study-note";
+    note.id = "vent-write-note";
+    note.textContent = copy.vent.writeHint;
+
+    const sheet = document.createElement("div");
+    sheet.className = "study-sheet";
 
     const mirror = document.createElement("div");
     mirror.className = "vent-words";
@@ -1692,40 +1607,53 @@
     textarea.className = "vent-textarea";
     textarea.placeholder = copy.vent.writePlaceholder;
     textarea.value = ventDraft;
+    textarea.spellcheck = false;
+    textarea.setAttribute("autocomplete", "off");
+    textarea.setAttribute("autocorrect", "off");
+    textarea.setAttribute("aria-label", copy.vent.writePlaceholder);
+    textarea.setAttribute("aria-describedby", note.id);
 
-    const initialWords = updateVentWords(mirror, ventDraft, false);
+    const initialWords = updateVentWords(mirror, ventDraft);
 
-    let lastKeyWasSpace = false;
-    textarea.addEventListener("keydown", (event) => {
-      lastKeyWasSpace = (event.key === " " || event.code === "Space");
-      if (event.key === "!" || event.key === "！") {
-        shakePanel("hard");
-        spawnTypingSpark(editor, 4);
-      } else if (event.key === "?" || event.key === "？") {
-        shakePanel("mid");
-        spawnTypingSpark(editor, 2);
-      } else if (event.key === "." || event.key === "।" || event.key === "\n" || event.key === "Enter") {
-        shakePanel("light");
-        spawnTypingSpark(editor, 2);
-      }
-    });
+    const progress = document.createElement("div");
+    progress.className = "study-progress";
+    progress.setAttribute("aria-hidden", "true");
+    const progressFill = document.createElement("span");
+    progressFill.className = "study-progress-fill";
+    progress.append(progressFill);
 
-    textarea.addEventListener("input", (event) => {
+    const foot = document.createElement("footer");
+    foot.className = "study-foot";
+    const countEl = document.createElement("span");
+    countEl.className = "study-count";
+    const burnButton = document.createElement("button");
+    burnButton.type = "button";
+    burnButton.className = "study-burn";
+    burnButton.textContent = copy.vent.burnButton;
+    const arrow = document.createElement("span");
+    arrow.className = "study-burn-arrow";
+    arrow.textContent = "→";
+    arrow.setAttribute("aria-hidden", "true");
+    burnButton.append(arrow);
+    foot.append(countEl, burnButton);
+
+    const back = document.createElement("button");
+    back.type = "button";
+    back.className = "study-link study-back";
+    back.textContent = copy.vent.back;
+    back.addEventListener("click", () => showVentChoice());
+
+    sheet.append(mirror, textarea);
+    study.append(head, title, note, sheet, progress, foot, back);
+    panel.append(study);
+
+    updateStudyUI(progressFill, countEl, burnButton, initialWords);
+
+    textarea.addEventListener("input", () => {
       ventDraft = textarea.value;
-      const isSpace = lastKeyWasSpace || (event.data === " ");
-      lastKeyWasSpace = false;
-
-      const words = updateVentWords(mirror, ventDraft, isSpace);
-      editor.classList.remove("idle-breathing");
-      updateRageUI(editor, rageBar, burnButton, words);
-      // has-text class drives the intermediate ember glow on the burn button
-      burnButton.classList.toggle("has-text", words > 0);
+      const words = updateVentWords(mirror, ventDraft);
+      updateStudyUI(progressFill, countEl, burnButton, words);
       mirror.scrollTop = textarea.scrollTop;
-
-      if (!isSpace && event.data && event.data.trim()) {
-        spawnTypingSpark(editor, 1);
-        playTypeSoundSoft(words);
-      }
       armVentIdleCheck(showVentWrite);
     });
 
@@ -1733,94 +1661,79 @@
       mirror.scrollTop = textarea.scrollTop;
     });
 
-    editor.append(mirror, textarea);
-    card.append(rageBarWrap, editor);
-    panel.insertBefore(card, actions);
+    burnButton.addEventListener("click", () => burnVentDraft(sheet, textarea, mirror, burnButton, back));
 
-    const burnButton = addButton(actions, copy.vent.burnButton, "primary burn-btn", () => burnVentDraft(editor, textarea, mirror, burnButton));
-    updateRageUI(editor, rageBar, burnButton, initialWords);
-    // Seed has-text if there's a saved draft
-    burnButton.classList.toggle("has-text", initialWords > 0);
-    textarea.focus();
+    textarea.focus({ preventScroll: true });
+    const caretEnd = textarea.value.length;
+    textarea.setSelectionRange(caretEnd, caretEnd);
+    textarea.scrollTop = textarea.scrollHeight;
+    mirror.scrollTop = textarea.scrollTop;
     armVentIdleCheck(showVentWrite);
   }
 
-  function burnVentDraft(editor, textarea, mirror, burnButton) {
+  function burnVentDraft(sheet, textarea, mirror, burnButton, backButton) {
     if (view !== "ventWrite") return;
+    if (!textarea.value.trim()) {
+      textarea.focus({ preventScroll: true });
+      return;
+    }
+
     clearVentIdleTimer();
     view = "ventBurning";
 
+    const reduceMotion = typeof window.matchMedia === "function"
+      && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     if (burnButton) burnButton.disabled = true;
+    if (backButton) backButton.disabled = true;
     textarea.readOnly = true;
-    editor.classList.add("flash-orange");
-    editor.classList.remove("rage-ready", "rage-active", "idle-breathing");
-    setTimeout(() => {
-      editor.classList.remove("flash-orange");
-      editor.classList.add("burning");
-    }, 180);
+    sheet.classList.add("burning");
     playBurnSound();
 
-    // Stagger every word's incineration to ash
     const words = mirror.querySelectorAll(".vent-word");
     words.forEach((word, index) => {
-      const delay = Math.min(index * 30, 450);
-      word.style.setProperty("--w-delay", `${delay}ms`);
+      word.style.setProperty("--w-delay", `${Math.min(index * 14, 300)}ms`);
     });
 
-    // Spawn floating ember sparks and soft ash flakes across the card
-    const particleCount = 42;
-    for (let index = 0; index < particleCount; index += 1) {
-      const particle = document.createElement("span");
-      const isEmber = index % 3 !== 0;
-      particle.className = isEmber ? "vent-ember-spark" : "vent-ash-flake";
-      particle.setAttribute("aria-hidden", "true");
-      const startX = 10 + Math.random() * 80;
-      const startY = 25 + Math.random() * 60;
-      const driftX = (Math.random() - 0.5) * 120;
-      const driftY = -(60 + Math.random() * 90);
-      const duration = 750 + Math.random() * 500;
-      const delay = Math.random() * 280;
-      const depth = Math.random();
-
-      particle.style.setProperty("--sx", `${startX}%`);
-      particle.style.setProperty("--sy", `${startY}%`);
-      particle.style.setProperty("--dx", `${Math.round(driftX)}px`);
-      particle.style.setProperty("--dy", `${Math.round(driftY)}px`);
-      particle.style.setProperty("--dur", `${Math.round(duration)}ms`);
-      particle.style.setProperty("--delay", `${Math.round(delay)}ms`);
-      particle.style.setProperty("--particle-size", `${(2 + depth * 3).toFixed(1)}px`);
-      particle.style.setProperty("--particle-blur", `${((1 - depth) * 1.2).toFixed(1)}px`);
-      particle.style.zIndex = depth > 0.72 ? "6" : depth < 0.28 ? "3" : isEmber ? "5" : "4";
-      editor.append(particle);
-    }
-
     transitionTimer = setTimeout(() => {
+      if (view !== "ventBurning") return;
       textarea.value = "";
       ventDraft = "";
       mirror.replaceChildren();
       showVentBurned();
-    }, 1150);
+    }, reduceMotion ? 300 : 1100);
   }
 
   function showVentBurned() {
+    clearVentIdleTimer();
     view = "ventBurned";
     setFreshTheme(true);
-    const { panel } = makePanel(copy.vent.burnedMessage);
-    panel.classList.add("vent-burned");
-    shadow.querySelector(".screen")?.classList.add("vent-cooling");
-    for (let index = 0; index < 9; index += 1) {
-      const ash = document.createElement("span");
-      ash.className = "cooling-ash";
-      ash.setAttribute("aria-hidden", "true");
-      ash.style.setProperty("--ash-x", `${8 + Math.random() * 84}%`);
-      ash.style.setProperty("--ash-size", `${2 + Math.random() * 3}px`);
-      ash.style.setProperty("--ash-delay", `${Math.round(Math.random() * 650)}ms`);
-      ash.style.setProperty("--ash-duration", `${(1.3 + Math.random() * 1.1).toFixed(2)}s`);
-      ash.style.setProperty("--ash-fall", `${24 + Math.round(Math.random() * 28)}px`);
-      ash.style.setProperty("--ash-drift", `${Math.round((Math.random() - 0.5) * 28)}px`);
-      panel.append(ash);
-    }
-    transitionTimer = setTimeout(showVentAfterExit, 2_600);
+    enterVentRoom();
+
+    const panel = shadow.querySelector(".panel");
+    panel.classList.remove("greeting-panel");
+    panel.replaceChildren();
+
+    const study = document.createElement("div");
+    study.className = "vent-study vent-burned-room";
+    study.lang = studyLang();
+
+    const title = document.createElement("h1");
+    title.className = "study-title";
+    title.textContent = copy.vent.burnedMessage;
+
+    const note = document.createElement("p");
+    note.className = "study-note";
+    note.textContent = copy.vent.burnedNote;
+
+    const back = document.createElement("button");
+    back.type = "button";
+    back.className = "study-link";
+    back.textContent = copy.vent.studyBackToWork;
+    back.addEventListener("click", () => void beginReturn());
+
+    study.append(title, note, back);
+    panel.append(study);
   }
 
   async function readVentRoundsToday() {
@@ -2345,7 +2258,11 @@
     clearVentIdleTimer();
     view = "ventIdleCheck";
     ventResumeView = resumeView;
-    const { actions } = makePanel(copy.vent.idleCheck);
+    const isStudy = resumeView === showVentWrite;
+    const title = isStudy
+      ? (copy.vent.studyIdleCheck || copy.vent.idleCheck)
+      : copy.vent.idleCheck;
+    const { actions } = makePanel(title);
     addButton(actions, copy.vent.idleYes, "primary", showVentAfterExit);
     addButton(actions, copy.vent.idleContinue, "secondary", resumeView);
   }
@@ -2595,7 +2512,17 @@
   }
 
   function setFreshTheme(isFresh) {
-    shadow.querySelector(".screen").classList.toggle("fresh", isFresh);
+    const screen = shadow.querySelector(".screen");
+    screen.classList.toggle("fresh", isFresh);
+    screen.classList.remove("vent-room", "vent-entry");
+  }
+
+  function enterVentEntry() {
+    shadow.querySelector(".screen")?.classList.add("vent-entry");
+  }
+
+  function enterVentRoom() {
+    shadow.querySelector(".screen")?.classList.add("vent-room");
   }
 
   function renderCurrentView() {
@@ -2902,9 +2829,6 @@
 
   function beginReturn() {
     showReturning();
-    // A completed pause counts as today's visit; otherwise the next page load
-    // would show the pause screen again straight away.
-    void rememberSiteHit().catch(() => {});
     transitionTimer = setTimeout(() => {
       void (async () => {
         const returned = await returnToWork();

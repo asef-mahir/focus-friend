@@ -11,6 +11,12 @@ html {
   display: block !important;
   width: 100vw !important;
   height: 100vh !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  color-scheme: light !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(70 118 90 / 45%) transparent;
   visibility: visible !important;
   pointer-events: none !important;
 }
